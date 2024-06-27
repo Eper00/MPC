@@ -10,7 +10,7 @@ def model_create(Aparam,Bparam,xreqparam,ulowerparam,uupperparam,x0param):
     model.B=Bparam
     model.xreq=xreqparam
     model.x=pyo.Var(model.horizont)
-    model.u=pyo.Var(model.horizont,bounds=(ulowerparam,uupperparam))
+    model.u=pyo.Var(model.horizont,bounds=(ulowerparam,uupperparam),domain=pyo.Integers)
     model.constraints = pyo.ConstraintList()
     model.obj = pyo.Objective(rule=lambda model: obj_rule(model), sense=pyo.minimize)
     
@@ -31,9 +31,24 @@ def system_dynamic(model):
            
             
 
-A = 0.025
+A = 1.1
 B = 1.5
-xreq=np.array([3])
+
+u_values={
+    0:-10,
+    1:-8,
+    2:-6,
+    3:-4,
+    4:-2,
+    5:0,
+    6:2,
+    7:4,
+    8:6,
+    9:8,
+    10:10,
+}
+
+xreq=np.array([110])
 x0=np.array([0.])
 
 uupper=10
@@ -46,7 +61,7 @@ usystem=np.empty((0,1),float)
 model=model_create(A,B,xreq,ulower,uupper,x0)
 xsystem = np.append(xsystem, np.array([model.x[0].value]), axis=0)
 
-for i in range(10):
+for i in range(100):
 
     solver = po.SolverFactory('gurobi')
     results = solver.solve(model)
