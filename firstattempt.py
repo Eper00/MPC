@@ -1,6 +1,7 @@
 import numpy as np
 import pyomo.environ as pyo
 import pyomo.opt as po
+import matplotlib.pyplot as plt
 
 def model_create(Aparam,Bparam,xreqparam,x0param):
     model = pyo.ConcreteModel() 
@@ -75,21 +76,24 @@ u_values={0:-10.,
           10:10}
 
 
-xreq=np.array([110])
-x0=np.array([0.])
+xreq=np.array([100.])
+x0=np.array([-10.])
 
-uupper=10
-ulower=-10
+total_time=20
+total_time_u=np.linspace(0,total_time,total_time+1)
+total_time_x=np.linspace(0,total_time+1,total_time+2)
 xsystem = np.empty((0,1),float)
 usystem=np.empty((0,1),float)
 
-
-
-model=model_create(A,B,xreq,x0)
-xsystem = np.append(xsystem, np.array([model.x[0].value]), axis=0)
 solver = po.SolverFactory('gurobi')
 
-for i in range(10):
+
+
+for i in range(len(total_time_u)):
+    if i ==0 :
+        model=model_create(A,B,xreq,x0)
+        xsystem = np.append(xsystem, np.array([x0]), axis=0)
+    
     results = solver.solve(model)
     usystem = np.append(usystem,np.array([[model.u[0].value]]),axis=0)
     xsystem = np.append(xsystem, np.array([[model.x[1].value]]), axis=0)
@@ -97,5 +101,27 @@ for i in range(10):
     model=model_create(A,B,xreq,xsystem[-1])
     
 
-print(usystem)
-print(xsystem)
+plt.figure(figsize=(12, 6))
+plt.subplot(1,2,1)
+plt.title("Beavatkozó jel")
+plt.xlabel("Time [s]")
+plt.ylabel("U")
+plt.plot(total_time_u,np.squeeze(usystem),color="b",linestyle="",marker="o")
+plt.grid()
+y_ticks = np.arange(np.min(usystem), np.max(usystem) + 1, 1)
+plt.yticks(y_ticks)
+x_ticks = np.arange(0, len(total_time_u) + 1, 1)
+plt.xticks(x_ticks)
+
+
+plt.subplot(1,2,2)
+plt.title("Állapotváltozó")
+plt.xlabel("Time [s]")
+plt.ylabel("X")
+plt.plot(total_time_x,np.squeeze(xsystem),color="r",linestyle="-",marker="o")
+plt.grid()
+y_ticks = np.arange(np.min(xsystem), np.max(xsystem) + 1, 10)
+plt.yticks(y_ticks)
+x_ticks = np.arange(0, len(total_time_x) + 1, 1)
+plt.xticks(x_ticks)
+plt.show()
