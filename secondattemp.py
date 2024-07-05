@@ -10,7 +10,9 @@ def real_system(x,u):
 
 
 
-def model_create(Aparam,Bparam,xreqparam,x0param):
+def model_create(Aparam,Bparam,xreqparam,x0param,xinitparam):
+    
+    
     model = pyo.ConcreteModel() 
     model.horizont=range(5)
     model.dim=range(2)
@@ -31,6 +33,11 @@ def model_create(Aparam,Bparam,xreqparam,x0param):
 
     model.obj = pyo.Objective(rule=lambda model: obj_rule(model), sense=pyo.minimize)
     
+    for i in model.horizont:
+        for j in model.dim:
+            model.x[i,j].value=xinitparam[j,i]
+
+
 
     model.x[0,:].fix(x0param[0])
    
@@ -39,6 +46,14 @@ def model_create(Aparam,Bparam,xreqparam,x0param):
     system_dynamic(model)
 
     return model
+
+def x_initialize(model):
+    xinit=np.empty((0,2),float)
+    for i in range(1,len(model.horizont)): 
+        xinit=np.vstack((xinit,np.array([model.x[i,0].value,model.x[i,1].value])))
+    xinit=np.vstack((xinit,np.array([model.x[len(model.horizont)-1,0].value,model.x[len(model.horizont)-1,1].value])))
+    return np.transpose(xinit)
+
 
 def u_rule(model):
     for t in model.horizont:
@@ -88,8 +103,10 @@ u_values={0:-10.,
 
 xreq=np.array([10.,10.])
 x0=np.array([0.,0.])
+xinit=np.zeros((2,5),float)
 
-total_time=20
+
+total_time=10
 total_time_u=np.linspace(0,total_time,total_time+1)
 total_time_x=np.linspace(0,total_time+1,total_time+2)
 xsystem = np.empty((0,2),float)
@@ -100,13 +117,13 @@ x_in=np.zeros((2,5),float)
 
 for i in range(len(total_time_u)):
     if i ==0:
-        model=model_create(A,B,xreq,x0)
+        model=model_create(A,B,xreq,x0,xinit)
         xsystem = np.vstack((xsystem,x0))
         x=x0
         
     results = solver.solve(model)
     
-    
+
     
     usystem=np.vstack((usystem,np.array([model.u[0].value])))
     
@@ -115,8 +132,9 @@ for i in range(len(total_time_u)):
     xsystem=np.vstack((xsystem,xreal))
     x=xreal
     x0=x
-    x_in=np.array([[model.x[1,0].value,model.x[1,1].value],[model.x[2,0].value,model.x[2,1].value],[model.x[3,0].value,model.x[3,1].value],[model.x[4,0].value,model.x[4,1].value],[model.x[4,0].value,model.x[4,1].value]])    
-    model=model_create(A,B,xreq,x0)
+    xinit=x_initialize(model)
+    
+    model=model_create(A,B,xreq,x0,xinit)
 
 
 print(xsystem)
