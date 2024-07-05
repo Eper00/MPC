@@ -6,10 +6,6 @@ import matplotlib.pyplot as plt
 def real_system(x,u):
     return np.matmul(A,x)+B*u
 
-
-
-
-
 def model_create(Aparam,Bparam,xreqparam,x0param,xinitparam):
     
     
@@ -101,12 +97,12 @@ u_values={0:-10.,
           10:10}
 
 
-xreq=np.array([10.,10.])
+xreq=np.array([8.,8.])
 x0=np.array([0.,0.])
 xinit=np.zeros((2,5),float)
 
 
-total_time=10
+total_time=25
 total_time_u=np.linspace(0,total_time,total_time+1)
 total_time_x=np.linspace(0,total_time+1,total_time+2)
 xsystem = np.empty((0,2),float)
@@ -137,6 +133,27 @@ for i in range(len(total_time_u)):
     model=model_create(A,B,xreq,x0,xinit)
 
 
-print(xsystem)
-print(usystem)
+xtime=np.linspace(0,np.shape(xsystem)[0]-1,np.shape(xsystem)[0])
+utime=np.linspace(0,np.shape(usystem)[0],np.shape(usystem)[0])
 
+fig = plt.figure(figsize=(10,10))
+ax = fig.add_subplot(2, 1, 1)
+plt.grid()
+y_ticks = np.arange(np.min(usystem), np.max(usystem) + 1, 1)
+plt.yticks(y_ticks)
+x_ticks = np.arange(0, len(utime) + 1, 1)
+plt.xticks(x_ticks)
+ax.plot(utime,usystem,linestyle="",marker="o")
+
+ax = fig.add_subplot(2, 1, 2,projection='3d')
+ax.plot3D(xtime, xsystem[:,0], xsystem[:,1], 'green')
+
+
+
+
+
+
+plt.show()
+
+
+print(xsystem)
