@@ -13,7 +13,7 @@ def dydt(t, y,param,u):
     dDdt=param[10]*param[9]*H
     return np.array([dSdt, dLdt,dPdt,dIdt,dAdt,dHdt,dRdt,dDdt])
 
-def runge_kutta_4(dydt, y0, t0, t_end, dt,param,u):
+def runge_kutta_4(y0, t0, t_end, dt,param,u):
     t = t0
     y = np.array(y0)
     step=(int)(t_end-t0)/dt
@@ -38,18 +38,18 @@ population=9800000.
                     #0->beta   #1->delta    #2->N          #3->alpha    #4->p    #5->q     #6->ro_1   #7->ro_a  #8->eta  #9->h    #10->mikro
 parameters=np.array([1/3 ,     0.75 ,       population,    1/2.5 ,      1/3 ,    0.6 ,      1/4 ,     1/4 ,     0.076 ,  1/10 ,    0.145])
 Latent=1.
-u=0
+u=0.
 
 y0 = [population-Latent, Latent,0,0,0,0,0,0]  
 t0 = 0.
 t_end = 365.
 dt = 0.5
 
-t_values, y_values = runge_kutta_4(dydt, y0, t0, t_end, dt,parameters,u)
+t_values, y_values = runge_kutta_4(y0, t0, t_end, dt,parameters,u)
 
 
-plt.plot(t_values*dt, y_values[:, 5], label='y1(t)')
-plt.xlabel('t')
-plt.ylabel('y')
-plt.legend()
+plt.plot(t_values*dt, y_values[:, 5])
+plt.xlabel('t [Days]')
+plt.ylabel('y [Number of patients in hospitals]')
+plt.grid()
 plt.show()
