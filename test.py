@@ -9,7 +9,7 @@ Latent=10.
 u=0.
 y0 = np.array([population-Latent, Latent,0,0,0,0,0,0])  
 t0 = 0.
-t_end = 365.
+t_end = 180.
 t_span=np.array([t0,t_end])
 dt = 1.
 times=np.linspace(t_span[0],t_span[1],1000)
@@ -43,16 +43,17 @@ def dydt(t, y,u=0):
     return [dSdt, dLdt,dPdt,dIdt,dAdt,dHdt,dRdt,dDdt]
 
 def scalar(scalar,array):
+    res=[None]*len(array)
     for i in range(len(array)):
-        array[i]=array[i]*scalar
-    return array
+        res[i]=array[i]*scalar
+    return res
 
 def summation(first,second,third=None,fourth=None):
     if third is None:
         third = [0] * len(first)
     if fourth is None:
         fourth = [0] * len(first)
-    S=[float]*len(first)
+    S=[None]*len(first)
     for i in range(len(first)):
         S[i]=first[i]+second[i]+third[i]+fourth[i]
 
@@ -64,18 +65,16 @@ def runge_kutta_4(y0, t0, t_end, dt,u):
     t_values = [t]
     y_values = [y]
     while t<t_end:
-        k1 = dydt(t, y,u)
-        k2 = dydt(t + dt/2, y + scalar(dt/2,k1),u)
-        k3 = dydt(t + dt/2, y + scalar(dt/2,k2),u)
-        k4 = dydt(t + dt, y + scalar(dt,k3),u)
-        K=summation(k1 , scalar(2,k2) , scalar(2,k3) , k4)
-    
+        k1 = dydt(t, y, u)
+        k2 = dydt(t + dt/2, summation(y , scalar(dt/2 , k1)),u)
+        k3 = dydt(t + dt/2, summation(y , scalar(dt/2 , k2)),u)
+        k4 = dydt(t + dt, summation(y , scalar(dt , k3)),u)
+        K=summation(k1 , scalar(2,k2) , scalar(2 , k3) , k4)
         y = summation(y, scalar(dt/6,K))
         t = t + dt
         
         t_values.append(t)
         y_values.append(y)
-    
     return t_values, y_values
 
 
@@ -85,16 +84,14 @@ def runge_kutta_4(y0, t0, t_end, dt,u):
 t_values, y_values = runge_kutta_4(y0, t0, t_end, dt,u)
 
 hospital=[]
-for i in range(366):
-    hospital.append(y_values[i][5])
-
-
+for i in range(len(y_values)):
+    hospital.append(y_values[i][0])
 
 fig = plt.figure(figsize=(10,10))
 plt.plot(t_values, hospital,linestyle="",marker=".")
 sol=realsystem()
 t=sol.t
-H=sol.y[5]
+H=sol.y[0]
 plt.plot(t,H)
 plt.legend(["Discretized system","Real system"])
 
