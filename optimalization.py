@@ -3,38 +3,26 @@ import pyomo.environ as pyo
 import pyomo.opt as po
 import matplotlib.pyplot as plt
 import optimalization_modell as m
-population=m.population
-Latent=m.Latent
+real_population=m.real_population
+normal_population=m.normal_population
+normal_latent=m.real_latent/real_population
 dt=m.dt
-t_end=100.
+t_end=150.
 
-x0 = [population-Latent, Latent,0.,0.,0.,0.,0.,0.]
-x_init=np.zeros((8,int(t_end/dt)))
-u_values={0: 0.,
-          1: 0.1,
-          2: 0.2,
-          3: 0.3,
-          4: 0.4,
-          5: 0.5,
-          6: 0.6,
-          7: 0.7,
-          8: 0.8,
-          9: 0.9}
-
-
+x0 = [normal_population-normal_latent, normal_latent,0.,0.,0.,0.]
+x_init=np.zeros((6,int(t_end/dt)))
 
 def create_model (x0param,xinitparam):
     model=pyo.ConcreteModel()
     model.horizont=range(int(t_end/dt))
-    model.dim=range(8)
+    model.dim=range(6)
+    model.u_kvantum=10
     
-    model.u_values = pyo.Set(initialize=u_values.values())
     model.x=pyo.Var(model.horizont,model.dim,domain=pyo.NonNegativeReals)
-    model.u=pyo.Var(model.horizont,domain=pyo.Reals)
-    model.u_idx=pyo.Var(model.horizont,range(len(model.u_values)),domain=pyo.Binary)
+    model.u_idx=pyo.Var(model.horizont,domain=pyo.NonNegativeIntegers,bounds=(0,model.u_kvantum))
+    model.u=pyo.Var(model.horizont,domain=pyo.NonNegativeReals)
     
     model.constraints = pyo.ConstraintList()
-    model.u_idx_constraints = pyo.ConstraintList()
     model.u_rule_constraints=pyo.ConstraintList()
     model.hospital_capacity=pyo.ConstraintList()
 
@@ -47,12 +35,10 @@ def create_model (x0param,xinitparam):
     for j in model.dim:
             model.x[0,j].fix(x0param[j])
 
-
-            
-
-    #u_idx_const(model)
-    #u_rule(model)
-    #hospital_capacity_constraint(model)
+    
+    u_rule(model)
+    
+    hospital_capacity_constraint(model)
     system_dynamic(model)
     return model
 
@@ -60,7 +46,7 @@ def create_model (x0param,xinitparam):
 def hospital_capacity_constraint(model):
     for t in model.horizont:
         model.hospital_capacity.add(
-            model.x[t,5]<=10000
+            model.x[t,5]<=10000/real_population
         )
 
 
@@ -73,7 +59,7 @@ def real_model(model):
 
 def system_dynamic(model):
     t=0
-    while t<t_end:
+    while t<t_end/dt:
         y0=[None]*len(model.dim)
         for i in model.dim:
             y0[i]=model.x[t,i]
@@ -83,21 +69,12 @@ def system_dynamic(model):
                 model.constraints.add(
                 model.x[t+1,j]==res[j] 
                 )
-        t=t+dt        
+        t=t+1        
     
 def u_rule(model):
     for t in model.horizont:
-        res=0
-        for j in range(len(model.u_values)):
-             res=model.u_idx[t,j]*u_values[j]+res
-            
-        model.u_rule_constraints.add(model.u[t]==res)
+        model.u_rule_constraints.add(model.u[t] == 0.1*model.u_idx[t])
     
-
-
-def u_idx_const(model):
-    for t in model.horizont:
-         model.u_idx_constraints.add(sum(model.u_idx[t,:])==1)
 
 
 
@@ -106,14 +83,21 @@ M=create_model(x0,x_init)
 solution=pyo.SolverFactory('baron').solve(M, tee=True)
 
 y_values=[None]*len(M.horizont)
+u_values=[None]*len(M.horizont)
 for i in M.horizont:
-    y_values[i]=M.x[i,0].value
+    y_values[i]=M.x[i,5].value*real_population
+    u_values[i]=M.u[i].value
     
-t_values=np.linspace(0,len(M.horizont),len(M.horizont))
+t_values=np.linspace(0,t_end-1,len(M.horizont))
 
-fig = plt.figure(figsize=(10,10))
-plt.plot(t_values, y_values,linestyle="",marker=".")
-    
-plt.grid()    
+
+plt.figure(figsize=(12, 6))
+plt.subplot(1,2,1)
+plt.plot(t_values,u_values,color="b",linestyle="",marker="o")
+plt.grid()
+
+
+plt.subplot(1,2,2)
+plt.plot(t_values,y_values,color="r",linestyle="-",marker="o")
+plt.grid()
 plt.show()
-print(y_values[99])

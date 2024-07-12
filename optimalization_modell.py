@@ -1,28 +1,29 @@
 import numpy as np
-population=9800000.
+real_population=9800000
+normal_population=1.
+real_latent=10
 dt=1.
-Latent=10.
-def dydt(t, y,u=0):
+def dydt(t, y,u):
    
                     #0->beta   #1->delta    #2->N          #3->alpha    #4->p    #5->q     #6->ro_1   #7->ro_a  #8->eta  #9->h    #10->mikro
-    param=np.array([1/3 ,     0.75 ,       population,    1/2.5 ,      1/3 ,    0.6 ,      1/4 ,     1/4 ,     0.076 ,  1/10 ,    0.145])
+    param=np.array([1/3 ,     0.75 ,       normal_population,    1/2.5 ,      1/3 ,    0.6 ,      1/4 ,     1/4 ,     0.076 ,  1/10 ,    0.145])
     S = y[0]
     L = y[1]
     P = y[2]
     I = y[3]
     A = y[4]
     H = y[5]
-    R = y[6]
-    D = y[7]
+    #R = y[6]
+    #D = y[7]
     dSdt = -param[0]*(1-u)*(P+I+A*param[1])*S/param[2]
     dLdt=param[0]*(1-u)*(P+I+A*param[1])*S/param[2]-param[3]*L
     dPdt=param[3]*L-param[4]*P
     dIdt=param[4]*param[5]*P-param[6]*I
     dAdt=(1-param[5])*param[4]*P-param[7]*A
     dHdt=param[6]*param[8]*I-param[9]*H
-    dRdt=param[6]*(1-param[8])*I+param[7]*A+(1-param[10])*param[9]*H
-    dDdt=param[10]*param[9]*H
-    return [dSdt, dLdt,dPdt,dIdt,dAdt,dHdt,dRdt,dDdt]
+    #dRdt=param[6]*(1-param[8])*I+param[7]*A+(1-param[10])*param[9]*H
+    #dDdt=param[10]*param[9]*H
+    return [dSdt, dLdt,dPdt,dIdt,dAdt,dHdt]
 
 def scalar(scalar,array):
     res=[None]*len(array)
