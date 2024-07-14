@@ -1,13 +1,17 @@
 import numpy as np
 import pyomo.environ as pyo
-import pyomo.opt as po
 import matplotlib.pyplot as plt
 import optimalization_modell as m
+
+
+
 real_population=m.real_population
 normal_population=m.normal_population
-normal_latent=m.real_latent/real_population
+normal_latent=m.normal_latent
 dt=m.dt
-t_end=150.
+t_end=160.
+
+
 
 x0 = [normal_population-normal_latent, normal_latent,0.,0.,0.,0.]
 x_init=np.zeros((6,int(t_end/dt)))
@@ -16,7 +20,7 @@ def create_model (x0param,xinitparam):
     model=pyo.ConcreteModel()
     model.horizont=range(int(t_end/dt))
     model.dim=range(6)
-    model.u_kvantum=10
+    model.u_kvantum=9
     
     model.x=pyo.Var(model.horizont,model.dim,domain=pyo.NonNegativeReals)
     model.u_idx=pyo.Var(model.horizont,domain=pyo.NonNegativeIntegers,bounds=(0,model.u_kvantum))
@@ -51,11 +55,10 @@ def hospital_capacity_constraint(model):
 
 
 def obj_rule(model):
-    return sum((model.u[t])**2 for t in model.horizont)
+    return sum((model.u[t]**2) for t in model.horizont)
 
-def real_model(model):
-    #Ide a valós rendszer, folytonos jön
-    return 0
+
+
 
 def system_dynamic(model):
     t=0
@@ -88,16 +91,25 @@ for i in M.horizont:
     y_values[i]=M.x[i,5].value*real_population
     u_values[i]=M.u[i].value
     
+    
 t_values=np.linspace(0,t_end-1,len(M.horizont))
+hospital=m.real_model_simulation(u_values)
+
 
 
 plt.figure(figsize=(12, 6))
+plt.subplot(1,2,2)
+plt.plot(t_values, hospital,color="b",linestyle="-",marker=".")
+
+
+
+plt.subplot(1,2,2)
+plt.plot(t_values,y_values,color="r",linestyle="",marker=".")
+plt.grid()
+
+
 plt.subplot(1,2,1)
 plt.plot(t_values,u_values,color="b",linestyle="",marker="o")
 plt.grid()
 
-
-plt.subplot(1,2,2)
-plt.plot(t_values,y_values,color="r",linestyle="-",marker="o")
-plt.grid()
 plt.show()

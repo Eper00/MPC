@@ -1,8 +1,13 @@
 import numpy as np
-real_population=9800000
+from scipy.integrate import solve_ivp
+t_end=160
+
+real_population=9800000.
 normal_population=1.
-real_latent=10
+real_latent=10.
+normal_latent=real_latent/real_population
 dt=1.
+x0=x0 = [normal_population-normal_latent, normal_latent,0.,0.,0.,0.]
 def dydt(t, y,u):
    
                     #0->beta   #1->delta    #2->N          #3->alpha    #4->p    #5->q     #6->ro_1   #7->ro_a  #8->eta  #9->h    #10->mikro
@@ -24,6 +29,32 @@ def dydt(t, y,u):
     #dRdt=param[6]*(1-param[8])*I+param[7]*A+(1-param[10])*param[9]*H
     #dDdt=param[10]*param[9]*H
     return [dSdt, dLdt,dPdt,dIdt,dAdt,dHdt]
+
+    
+def real_system_step(u,t_span,y0):
+    times=np.linspace(t_span[0],t_span[1],1000)
+    soln = solve_ivp(lambda t, y: dydt(t, y, u), t_span, y0, t_eval=times)
+    
+    return soln
+def real_model_simulation(u_values):
+    
+    real_system=[]
+    t0_step=0
+    t_end_step=t0_step+dt
+    t_span=np.array([t0_step,t_end_step])
+    x=x0
+    hospital=[]
+    hospital.append(x[5]*real_population)    
+
+    while(t0_step < t_end-1):
+        sol=real_system_step(u_values[int(t0_step/dt)],t_span,x)
+        real_system.append(sol)
+        x=sol.y[:,-1]
+        t0_step=t0_step+dt
+        t_end_step=t_end_step+dt
+        t_span=np.array([t0_step,t_end_step])
+        hospital.append(x[5]*real_population)    
+    return hospital
 
 def scalar(scalar,array):
     res=[None]*len(array)
