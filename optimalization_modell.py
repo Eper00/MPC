@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import solve_ivp
-t_end=160
+t_end=100.
 
 real_population=9800000.
 normal_population=1.
@@ -44,7 +44,8 @@ def real_model_simulation(u_values):
     t_span=np.array([t0_step,t_end_step])
     x=x0
     hospital=[]
-    hospital.append(x[5]*real_population)    
+    hospital.append(x[5]*real_population)
+        
 
     while(t0_step < t_end-1):
         sol=real_system_step(u_values[int(t0_step/dt)],t_span,x)
@@ -75,7 +76,6 @@ def summation(first,second,third=None,fourth=None):
 
 def runge_kutta_4_step(y0,u):
     y = y0
-    u=u
     t=0
     k1 = dydt(t, y, u)
     k2 = dydt(t + dt/2, summation(y , scalar(dt/2 , k1)),u)
