@@ -14,13 +14,13 @@ x0 = m.x0
 # terminális halmaz megkeresése
 # ezután annek beépítése
 x_init=np.ones((6,t_end),dtype=float)
-k=950
+k=100000
 
 def create_model (x0param):
     model=pyo.ConcreteModel()
     model.horizont=range(t_end)
     model.dim=range(6)
-    model.u_kvantum=9*k
+    model.u_kvantum=10*k
     model.weeks=range(int((t_end-1)/7)+1)
         
     model.x=pyo.Var(model.horizont,model.dim,domain=pyo.NonNegativeReals)
@@ -79,9 +79,9 @@ def system_dynamic(model):
                 
                 model.constraints.add(model.x[t+1,j]==res[j])
         if(t>t_end-20):
-            model.hospital_capacity.add(model.x[t,5]<=m.normal_end_max_patinets)
+            model.hospital_capacity.add(model.x[t,5]<=m.end_max_patients)
         else:        
-            model.hospital_capacity.add(model.x[t,5]<=m.normal_max_patients)
+            model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients)
 
         
 
@@ -94,7 +94,7 @@ solution=solution.solve(M, tee=True)
 y_values=[np.float64]*len(M.horizont)
 u_values=[np.float64]*len(M.horizont)
 for i in M.horizont:
-    y_values[i]=M.x[i,5].value*real_population
+    y_values[i]=M.x[i,5].value
     u_values[i]=M.u[int(i/7)].value*(0.1/k)
     
 t_values=np.linspace(0,t_end-1,len(M.horizont))
