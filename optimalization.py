@@ -2,23 +2,19 @@ import numpy as np
 import pyomo.environ as pyo
 import matplotlib.pyplot as plt
 import optimalization_modell as m
-real_population=m.real_population
-normal_population=m.normal_population
-normal_latent=m.normal_latent
 dt=m.dt
 t_end=m.t_end
+t_control_end=m.t_control_end
 x0 = m.x0
-# többi állapotváltozás
-# második hullám
-# rovarírtás még
 # terminális halmaz megkeresése
 # ezután annek beépítése
 x_init=np.ones((6,t_end),dtype=float)
-k=100000
+k=1000
 
 def create_model (x0param):
     model=pyo.ConcreteModel()
     model.horizont=range(t_end)
+    model.control=range(t_control_end)
     model.dim=range(6)
     model.u_kvantum=10*k
     model.weeks=range(int((t_end-1)/7)+1)
@@ -37,29 +33,10 @@ def create_model (x0param):
             model.x[i,j].value=x_init[j,i]
                        
     for j in model.dim:
-            model.x[0,j].fix(x0param[j])
-
-
-    for i in range(1,4):
-        if (len(model.weeks)>i):
-            model.u[len(model.weeks)-i].fix(0)
-
-   
-        
-        
+            model.x[0,j].fix(x0param[j])    
         
     system_dynamic(model)
-
-
-    
     return model
-
-
-def hospital_capacity_constraint(model):
-    for t in model.horizont:
-        model.hospital_capacity.add(
-            model.x[t,5]<=m.normal_max_patients
-        )
 
 
 def obj_rule(model):
@@ -78,38 +55,49 @@ def system_dynamic(model):
             if t < max(model.horizont):
                 
                 model.constraints.add(model.x[t+1,j]==res[j])
-        if(t>t_end-20):
-            model.hospital_capacity.add(model.x[t,5]<=m.end_max_patients)
-        else:        
-            model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients)
-
         
-
+        if (t<max(model.control)):
+            model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients/m.real_population)
+   
     
 
 M=create_model(x0)
 solution = pyo.SolverFactory('baron')
 
 solution=solution.solve(M, tee=True)
-y_values=[np.float64]*len(M.horizont)
+s_values=[np.float64]*len(M.horizont)
+l_values=[np.float64]*len(M.horizont)
+p_values=[np.float64]*len(M.horizont)
+i_values=[np.float64]*len(M.horizont)
+a_values=[np.float64]*len(M.horizont)
+h_values=[np.float64]*len(M.horizont)
 u_values=[np.float64]*len(M.horizont)
 for i in M.horizont:
-    y_values[i]=M.x[i,5].value
+    s_values[i]=M.x[i,0].value*m.real_population*m.correction
+    l_values[i]=M.x[i,1].value*m.real_population*m.correction
+    p_values[i]=M.x[i,2].value*m.real_population*m.correction
+    i_values[i]=M.x[i,3].value*m.real_population*m.correction
+    a_values[i]=M.x[i,4].value*m.real_population*m.correction
+    h_values[i]=M.x[i,5].value*m.real_population*m.correction
     u_values[i]=M.u[int(i/7)].value*(0.1/k)
     
 t_values=np.linspace(0,t_end-1,len(M.horizont))
 hospital=m.real_model_simulation(u_values)
 
-
-plt.figure(figsize=(12, 6))
-plt.subplot(1,2,2)
-plt.plot(t_values, hospital,color="b",linestyle="-",marker=".")
-
-plt.subplot(1,2,2)
-plt.plot(t_values,y_values,color="r",linestyle="",marker=".")
+plt.figure(figsize=(12, 12))
+plt.subplot(2,2,3)
+plt.plot(t_values, hospital,color="k",linestyle="-",marker=".")
+plt.plot(t_values,h_values,color="m",linestyle="",marker=".")
+plt.grid()
+plt.subplot(2,2,2)
+plt.plot(t_values,l_values,color="b",linestyle="-",marker=".")
+plt.plot(t_values,p_values,color="g",linestyle="-",marker=".")
+plt.plot(t_values,i_values,color="r",linestyle="-",marker=".")
+plt.plot(t_values,a_values,color="c",linestyle="-",marker=".")
+plt.plot(t_values,h_values,color="m",linestyle="-",marker=".")
 plt.grid()
 
-plt.subplot(1,2,1)
+plt.subplot(2,2,1)
 plt.plot(t_values,u_values,color="b",linestyle="",marker="o")
 plt.grid()
 

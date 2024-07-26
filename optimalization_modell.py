@@ -1,20 +1,17 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 t_end=200
-real_population=980
-normal_population=1.
-real_latent=0.001
-normal_latent=real_latent/real_population
-real_max_patients=1
-normal_max_patients=real_max_patients/real_population
-end_max_patients=real_max_patients*0.1
-normal_end_max_patinets=end_max_patients/real_population
+t_control_end=180
+correction=1000
+real_population=9800000/correction
+real_latent=10/correction
+real_max_patients=10000/correction
 dt=1
-x0 = [real_population-real_latent, real_latent,0.,0.,0.,0.]
+x0 = [(real_population-real_latent)/real_population, real_latent/real_population,0.,0.,0.,0.]
 def dydt(t, y,u):
    
                     #0->beta   #1->delta    #2->N          #3->alpha    #4->p    #5->q     #6->ro_1   #7->ro_a  #8->eta  #9->h    #10->mikro
-    param=np.array([1/3 ,     0.75 ,       real_population,    1/2.5 ,      1/3 ,    0.6 ,      1/4 ,     1/4 ,     0.076 ,  1/10 ,    0.145])    
+    param=np.array([1/3 ,     0.75 ,       1,    1/2.5 ,      1/3 ,    0.6 ,      1/4 ,     1/4 ,     0.076 ,  1/10 ,    0.145])    
     S = y[0]
     L = y[1]
     P = y[2]
@@ -46,7 +43,7 @@ def real_model_simulation(u_values):
     t_span=np.array([t0_step,t_end_step])
     x=x0
     hospital=[]
-    hospital.append(x[5]*real_population)
+    hospital.append(x[5]*real_population*correction)
         
 
     while(t0_step < t_end-1):
@@ -56,7 +53,7 @@ def real_model_simulation(u_values):
         t0_step=t0_step+dt
         t_end_step=t_end_step+dt
         t_span=np.array([t0_step,t_end_step])
-        hospital.append(x[5])    
+        hospital.append(x[5]*real_population*correction)    
     return hospital
 
 def scalar(scalar,array):
