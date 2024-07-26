@@ -7,15 +7,15 @@ t_end=m.t_end
 t_control_end=m.t_control_end
 x0 = m.x0
 # terminális halmaz megkeresése
-# ezután annek beépítése
-x_init=np.ones((6,t_end),dtype=float)
+# ezután annak beépítése
+x_init=np.ones((8,t_end),dtype=float)
 k=1000
 
 def create_model (x0param):
     model=pyo.ConcreteModel()
     model.horizont=range(t_end)
     model.control=range(t_control_end)
-    model.dim=range(6)
+    model.dim=range(8)
     model.u_kvantum=10*k
     model.weeks=range(int((t_end-1)/7)+1)
         
@@ -34,7 +34,7 @@ def create_model (x0param):
                        
     for j in model.dim:
             model.x[0,j].fix(x0param[j])    
-        
+ 
     system_dynamic(model)
     return model
 
@@ -71,6 +71,9 @@ p_values=[np.float64]*len(M.horizont)
 i_values=[np.float64]*len(M.horizont)
 a_values=[np.float64]*len(M.horizont)
 h_values=[np.float64]*len(M.horizont)
+r_values=[np.float64]*len(M.horizont)
+d_values=[np.float64]*len(M.horizont)
+
 u_values=[np.float64]*len(M.horizont)
 for i in M.horizont:
     s_values[i]=M.x[i,0].value*m.real_population*m.correction
@@ -79,6 +82,9 @@ for i in M.horizont:
     i_values[i]=M.x[i,3].value*m.real_population*m.correction
     a_values[i]=M.x[i,4].value*m.real_population*m.correction
     h_values[i]=M.x[i,5].value*m.real_population*m.correction
+    r_values[i]=M.x[i,6].value*m.real_population*m.correction
+    d_values[i]=M.x[i,7].value*m.real_population*m.correction
+
     u_values[i]=M.u[int(i/7)].value*(0.1/k)
     
 t_values=np.linspace(0,t_end-1,len(M.horizont))
@@ -88,6 +94,9 @@ plt.figure(figsize=(12, 12))
 plt.subplot(2,2,3)
 plt.plot(t_values, hospital,color="k",linestyle="-",marker=".")
 plt.plot(t_values,h_values,color="m",linestyle="",marker=".")
+plt.legend(['The real system respond ','The predicted respond' ])
+plt.xlabel("Time [days]")
+plt.ylabel("Cardinality of the set [sample]")
 plt.grid()
 plt.subplot(2,2,2)
 plt.plot(t_values,l_values,color="b",linestyle="-",marker=".")
@@ -95,10 +104,24 @@ plt.plot(t_values,p_values,color="g",linestyle="-",marker=".")
 plt.plot(t_values,i_values,color="r",linestyle="-",marker=".")
 plt.plot(t_values,a_values,color="c",linestyle="-",marker=".")
 plt.plot(t_values,h_values,color="m",linestyle="-",marker=".")
+plt.plot(t_values,d_values,color="k",linestyle="-",marker=".")
+plt.legend(['Latent','Pre-symptomatic ','Symptomatic infected','Symptomatic infected but will recover','Hospital','Died'])
+plt.xlabel("Time [days]")
+plt.ylabel("Cardinality of the set [sample]")
+plt.grid()
+plt.subplot(2,2,4)
+plt.plot(t_values,s_values,color="b",linestyle="-",marker=".")
+plt.plot(t_values,r_values,color="g",linestyle="-",marker=".")
+plt.legend(['Susceptibles','Recover'])
+plt.xlabel("Time [days]")
+plt.ylabel("Cardinality of the set [sample]")
 plt.grid()
 
 plt.subplot(2,2,1)
 plt.plot(t_values,u_values,color="b",linestyle="",marker="o")
+plt.legend(['Control signal'])
+plt.xlabel("Time [days]")
+plt.ylabel("Control scenarios")
 plt.grid()
 
 plt.show()

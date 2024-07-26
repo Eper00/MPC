@@ -1,13 +1,13 @@
 import numpy as np
 from scipy.integrate import solve_ivp
-t_end=200
-t_control_end=180
+t_end=160
+t_control_end=160
 correction=1000
 real_population=9800000/correction
 real_latent=10/correction
-real_max_patients=10000/correction
+real_max_patients=40000/correction
 dt=1
-x0 = [(real_population-real_latent)/real_population, real_latent/real_population,0.,0.,0.,0.]
+x0 = [(real_population-real_latent)/real_population, real_latent/real_population,0.,0.,0.,0.,0.,0.]
 def dydt(t, y,u):
    
                     #0->beta   #1->delta    #2->N          #3->alpha    #4->p    #5->q     #6->ro_1   #7->ro_a  #8->eta  #9->h    #10->mikro
@@ -18,17 +18,17 @@ def dydt(t, y,u):
     I = y[3]
     A = y[4]
     H = y[5]
-    #R = y[6]
-    #D = y[7]
+    R = y[6]
+    D = y[7]
     dSdt = -param[0]*(1-u)*(P+I+A*param[1])*S/param[2]
     dLdt=param[0]*(1-u)*(P+I+A*param[1])*S/param[2]-param[3]*L
     dPdt=param[3]*L-param[4]*P
     dIdt=param[4]*param[5]*P-param[6]*I
     dAdt=(1-param[5])*param[4]*P-param[7]*A
     dHdt=param[6]*param[8]*I-param[9]*H
-    #dRdt=param[6]*(1-param[8])*I+param[7]*A+(1-param[10])*param[9]*H
-    #dDdt=param[10]*param[9]*H
-    return [dSdt, dLdt,dPdt,dIdt,dAdt,dHdt]
+    dRdt=param[6]*(1-param[8])*I+param[7]*A+(1-param[10])*param[9]*H
+    dDdt=param[10]*param[9]*H
+    return [dSdt, dLdt,dPdt,dIdt,dAdt,dHdt,dRdt,dDdt]
 
     
 def real_system_step(u,t_span,y0):
