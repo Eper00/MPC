@@ -8,9 +8,7 @@ t0 = 0.
 t_end = 50.
 t_span=np.array([t0,t_end])
 times=np.linspace(t_span[0],t_span[1],1000)
-
 t=np.linspace(t0,t_end,1000)
-
 def realsystem(y0_param):
     soln=solve_ivp(dydt,t_span,y0_param,t_eval=times)
     return soln
@@ -35,8 +33,3 @@ def dydt(t, y,u=0):
     #dRdt=param[6]*(1-param[8])*I+param[7]*A+(1-param[10])*param[9]*H
     #dDdt=param[10]*param[9]*H
     return np.array([dSdt, dLdt,dPdt,dIdt,dAdt,dHdt])
-
-
-
-
-
