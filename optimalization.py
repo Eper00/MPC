@@ -2,14 +2,18 @@ import numpy as np
 import pyomo.environ as pyo
 import matplotlib.pyplot as plt
 import optimalization_modell as m
+import mapping as mp
 dt=m.dt
 t_end=m.t_end
 t_control_end=m.t_control_end
 x0 = m.x0
-# terminális halmaz megkeresése
-# ezután annak beépítése
+x0_sets=x0[0:6]
+x0_sets=np.delete(x0_sets,4)
+term=mp.map(50000)
 x_init=np.ones((8,t_end),dtype=float)
-k=1000
+k=100000
+print(np.max(term[:,0])*m.real_population)
+print(np.min(term[:,0])*m.real_population)
 
 def create_model (x0param):
     model=pyo.ConcreteModel()
@@ -23,8 +27,7 @@ def create_model (x0param):
     model.u=pyo.Var(model.weeks,domain=pyo.NonNegativeIntegers,bounds=(0,model.u_kvantum))
     
     model.constraints = pyo.ConstraintList()
-    model.u_rule_constraints=pyo.ConstraintList()
-    model.hospital_capacity=pyo.ConstraintList()
+
 
     model.obj = pyo.Objective(rule=obj_rule, sense=pyo.minimize)
         
@@ -36,12 +39,14 @@ def create_model (x0param):
             model.x[0,j].fix(x0param[j])    
  
     system_dynamic(model)
+    model.constraints.add(model.x[ len(model.horizont)-1,0] >= (np.min(term[:,0])*m.real_population)/m.correction)
+    model.constraints.add(model.x[ len(model.horizont)-1,0] <= (np.max(term[:,0]*m.real_population))/m.correction)
     return model
 
 
 def obj_rule(model):
+    
     return sum((model.u[t]**2) for t in model.weeks)
-
 
 def system_dynamic(model):
     x_temp=[None]*len(model.dim)
@@ -56,8 +61,8 @@ def system_dynamic(model):
                 
                 model.constraints.add(model.x[t+1,j]==res[j])
         
-        if (t<max(model.control)):
-            model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients/m.real_population)
+    
+                model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients/m.real_population)
    
     
 
