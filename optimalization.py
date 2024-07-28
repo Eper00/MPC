@@ -9,11 +9,10 @@ t_control_end=m.t_control_end
 x0 = m.x0
 x0_sets=x0[0:6]
 x0_sets=np.delete(x0_sets,4)
-term=mp.map(50000)
+term=mp.map(50)
 x_init=np.ones((8,t_end),dtype=float)
-k=100000
-print(np.max(term[:,0])*m.real_population)
-print(np.min(term[:,0])*m.real_population)
+k=1000
+
 
 def create_model (x0param):
     model=pyo.ConcreteModel()
@@ -27,6 +26,7 @@ def create_model (x0param):
     model.u=pyo.Var(model.weeks,domain=pyo.NonNegativeIntegers,bounds=(0,model.u_kvantum))
     
     model.constraints = pyo.ConstraintList()
+    model.hospital_capacity=pyo.ConstraintList()
 
 
     model.obj = pyo.Objective(rule=obj_rule, sense=pyo.minimize)
@@ -39,8 +39,8 @@ def create_model (x0param):
             model.x[0,j].fix(x0param[j])    
  
     system_dynamic(model)
-    model.constraints.add(model.x[ len(model.horizont)-1,0] >= (np.min(term[:,0])*m.real_population)/m.correction)
-    model.constraints.add(model.x[ len(model.horizont)-1,0] <= (np.max(term[:,0]*m.real_population))/m.correction)
+    #model.constraints.add(model.x[ len(model.horizont)-1,0] >= (np.min(term[:,0])*m.real_population)/m.correction)
+    #model.constraints.add(model.x[ len(model.horizont)-1,0] <= (np.max(term[:,0]*m.real_population))/m.correction)
     return model
 
 
@@ -62,7 +62,8 @@ def system_dynamic(model):
                 model.constraints.add(model.x[t+1,j]==res[j])
         
     
-                model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients/m.real_population)
+        if (t<max(model.control)):
+            model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients/m.real_population)
    
     
 
