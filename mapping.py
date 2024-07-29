@@ -8,8 +8,7 @@ def inspect(test_set):
     return 0
 def map (number_of_points):
     y0 = np.zeros(6)
-    res = np.zeros(5)
-    terminal_sets = np.empty((0, 5))
+    terminal_sets = np.empty((0, 6))
     for mapping in range(number_of_points):
         sum = 0
         for i in range(6):
@@ -20,7 +19,6 @@ def map (number_of_points):
         H = sol.y[5]
         opinion = inspect(H)
         if opinion == 0:
-            res = np.delete(y0, 4)
-            terminal_sets = np.vstack((terminal_sets, res))
+            terminal_sets = np.vstack((terminal_sets, y0))
     return terminal_sets
 

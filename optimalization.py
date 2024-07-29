@@ -9,10 +9,10 @@ t_control_end=m.t_control_end
 x0 = m.x0
 x0_sets=x0[0:6]
 x0_sets=np.delete(x0_sets,4)
-term=mp.map(50)
+term=mp.map(100)
+print(np.max(term[:,0]))
 x_init=np.ones((8,t_end),dtype=float)
 k=1000
-
 
 def create_model (x0param):
     model=pyo.ConcreteModel()
@@ -39,14 +39,12 @@ def create_model (x0param):
             model.x[0,j].fix(x0param[j])    
  
     system_dynamic(model)
-    #model.constraints.add(model.x[ len(model.horizont)-1,0] >= (np.min(term[:,0])*m.real_population)/m.correction)
-    #model.constraints.add(model.x[ len(model.horizont)-1,0] <= (np.max(term[:,0]*m.real_population))/m.correction)
     return model
 
 
 def obj_rule(model):
     
-    return sum((model.u[t]**2) for t in model.weeks)
+    return sum(((model.u[int(t/7)]*(0.1/k))**2+(model.x[t,0]-np.max(term[:,0]))**2) for t in model.horizont)
 
 def system_dynamic(model):
     x_temp=[None]*len(model.dim)
