@@ -4,13 +4,12 @@ import matplotlib.pyplot as plt
 import optimalization_modell as m
 import mapping as mp
 dt=m.dt
+terminal_state=mp.get_terminal_state()
 t_end=m.t_end
 t_control_end=m.t_control_end
 x0 = m.x0
 x0_sets=x0[0:6]
 x0_sets=np.delete(x0_sets,4)
-term=mp.map(100)
-print(np.max(term[:,0]))
 x_init=np.ones((8,t_end),dtype=float)
 k=1000
 
@@ -44,7 +43,7 @@ def create_model (x0param):
 
 def obj_rule(model):
     
-    return sum(((model.u[int(t/7)]*(0.1/k))**2+(model.x[t,0]-np.max(term[:,0]))**2) for t in model.horizont)
+    return sum(((model.u[int(t/7)]*(0.1/k))**2+(model.x[t,0]-terminal_state)**2) for t in model.horizont)
 
 def system_dynamic(model):
     x_temp=[None]*len(model.dim)

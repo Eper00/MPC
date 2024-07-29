@@ -1,11 +1,11 @@
 import numpy as np
 from scipy.integrate import solve_ivp
-t_end=210
+t_end=220
 t_control_end=180
 correction=1000
 real_population=9800000/correction
 real_latent=100/correction
-real_max_patients=25000/correction
+real_max_patients=20000/correction
 dt=1
 x0 = [(real_population-real_latent)/real_population, real_latent/real_population,0.,0.,0.,0.,0.,0.]
 def dydt(t, y,u):
