@@ -15,7 +15,7 @@ def realsystem(y0_param):
 def dydt(t, y,u=0):
    
                     #0->beta   #1->delta    #2->N          #3->alpha    #4->p    #5->q     #6->ro_1   #7->ro_a  #8->eta  #9->h    #10->mikro
-    param=np.array([1/3 ,     0.75 ,       1,    1/2.5 ,      1/3 ,    0.6 ,      1/4 ,     1/4 ,     0.076 ,  1/10 ,    0.145])
+    param=np.array([1/3 ,     0.75 ,       9800000,    1/2.5 ,      1/3 ,    0.6 ,      1/4 ,     1/4 ,     0.076 ,  1/10 ,    0.145])
     S = y[0]
     L = y[1]
     P = y[2]

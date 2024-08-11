@@ -1,13 +1,20 @@
 import numpy as np
 from scipy.integrate import solve_ivp
-t_end=220
-t_control_end=180
+# Paraméterek a szimulációhoz
+# A horizont melyen optimalizálunk
+t_end=180
+# Korrekció a numerikus stabilitásért (???)
 correction=1000
 real_population=9800000/correction
-real_latent=100/correction
+real_latent=50/correction
 real_max_patients=20000/correction
+# A mintavételezés idő tartalma
 dt=1
+# Kezdőállapot a rednszernek
 x0 = [(real_population-real_latent)/real_population, real_latent/real_population,0.,0.,0.,0.,0.,0.]
+# Ez a folytonos rendszert leíró függvény
+# Bemenet : t,y paraméterei a differenciálegyenlet rendszernek, u a beavatkozó szekvencia
+# Kiement : A rendszer válasza az elöző állapotokra, és beavatkozásra
 def dydt(t, y,u):
    
                     #0->beta   #1->delta    #2->N          #3->alpha    #4->p    #5->q     #6->ro_1   #7->ro_a  #8->eta  #9->h    #10->mikro
@@ -29,12 +36,17 @@ def dydt(t, y,u):
     dRdt=param[6]*(1-param[8])*I+param[7]*A+(1-param[10])*param[9]*H
     dDdt=param[10]*param[9]*H
     return [dSdt, dLdt,dPdt,dIdt,dAdt,dHdt,dRdt,dDdt]
-
-    
+# A folytonos rendszer megoldása egy időlépésre
+# Bemenet: Egy elemei beavatkozás adott t-ben, t_span az adott dt idő alatt mennyi t-re számítsa ki a 
+# megoldást a diefferenciálegyenlet solvere, y0 a kezdőállapot melyből indul a rendszer
+# Kimenet: A differnciálegyenelt megoldása egy időlépés alatt 
 def real_system_step(u,t_span,y0):
     times=np.linspace(t_span[0],t_span[1],1000)
     soln = solve_ivp(lambda t, y: dydt(t, y, u), t_span, y0, t_eval=times)
     return soln
+# Függvény A folytonos rendszer megoldására, ezt lépteti a "real_system_step" függvényt
+# Bemenet: A beavatkozóhel szekvenciája
+# Kimenet: A kórházban lévő emberek számosságának alakulása az időben a folytonos modell alapján
 def real_model_simulation(u_values):
     
     real_system=[]
@@ -56,12 +68,19 @@ def real_model_simulation(u_values):
         hospital.append(x[5]*real_population*correction)    
     return hospital
 
+# Segéd függvény, mivel pyomo könyvtárban az optimalizálandó változókat nem használhatunk numpy
+# tömbbe, illetve nem hívhatunk meg rajtuk numpy függvényeket ezért implementáltam sajátokat
+# ez a függvény egy tömböt szorozz meg egy skalárral
+# Bemenet: A szorzandó tömb, illetve a skalár
+# Kimenet: A skaálrral beszorzott tömb
 def scalar(scalar,array):
     res=[None]*len(array)
     for i in range(len(array)):
         res[i]=array[i]*scalar
     return res
-
+# Hasonoló okokból lett implementálva ahogyan a "scalar" függvény
+# Bemenet: Az összeadanadó tömbök, a függvény elfogadja ,ha 2-3-vagy 4 tömböt akarunk összeadni egymással
+# Kimenet: Az összeadott tömbök
 def summation(first,second,third=None,fourth=None):
     if third is None:
         third = [0] * len(first)
@@ -70,9 +89,11 @@ def summation(first,second,third=None,fourth=None):
     S=[None]*len(first)
     for i in range(len(first)):
         S[i]=first[i]+second[i]+third[i]+fourth[i]
-
     return S
-
+# Numerikusan megoldja a folytonos differenciálegyeneltet, ez a függvény lépteti a dinamikát, így kapjuk
+# meg a x_k-->x_k+1-et, azaz felfoghatjuk, úgy, mint egy mintavétlező függvényt. (21-es egyenlet)
+# Bemenet: A kezdő állapot adott k időben és a bevatkozás
+# Kimenet: A k.-k időpontból a k+1-be lépünk 
 def runge_kutta_4_step(y,u):
     t=0
     k1 = dydt(t, y, u)

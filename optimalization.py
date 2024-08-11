@@ -4,19 +4,23 @@ import matplotlib.pyplot as plt
 import optimalization_modell as m
 import mapping as mp
 dt=m.dt
+#Antal Péter git repo
 terminal_state=mp.get_terminal_state()
+# Paraméterek a szabályozásnak:
+# Az idő horizont melyen irányítani szeretnénk 
 t_end=m.t_end
-t_control_end=m.t_control_end
+# Kezdőállapot felvétele
 x0 = m.x0
-x0_sets=x0[0:6]
-x0_sets=np.delete(x0_sets,4)
+# inicializációs az optimalizációnak
 x_init=np.ones((8,t_end),dtype=float)
+# Kvantálása a beavatkozó jelnek
 k=1000
-
+# Ez a függvény felelős az optimalizációs probléma felépítésért
+# Bemenet: Kezdőállapot a dinamikának
+# Kimenet: Az optimalizálandó modell
 def create_model (x0param):
     model=pyo.ConcreteModel()
     model.horizont=range(t_end)
-    model.control=range(t_control_end)
     model.dim=range(8)
     model.u_kvantum=10*k
     model.weeks=range(int((t_end-1)/7)+1)
@@ -40,17 +44,21 @@ def create_model (x0param):
     system_dynamic(model)
     return model
 
-
+# Az optimalizálandó kifejezés, minimalizálni akarjuk az eltérést a terminális állapottól, 
+# illetve a beavatkozásokat is minimalizálni akarjuk (20-as egyenlet)
 def obj_rule(model):
     
-    return sum(((model.u[int(t/7)]*(0.1/k))**2+(model.x[t,0]-terminal_state)**2) for t in model.horizont)
+    return sum(((model.u[int(t/7)]*(0.1/k)**2+(model.x[t,0]-terminal_state[0])**2)) for t in model.horizont)
 
+# A dinamika betartásáért felelős függvény (21-es egyenlet)
 def system_dynamic(model):
     x_temp=[None]*len(model.dim)
     for t in model.horizont:
-        
+        # Korlátozzuk a kórházak kapacitásást is (22-es egyenlet)
+        model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients/m.real_population)
         for i in model.dim:
             x_temp[i]=model.x[t,i]
+        # A diferenciálegyenlet rendszer numerikus megoldásának léptetésért felelős 
         res=m.runge_kutta_4_step(x_temp,(0.1/k)*model.u[int(t/7)])
         for j in model.dim:
 
@@ -59,15 +67,15 @@ def system_dynamic(model):
                 model.constraints.add(model.x[t+1,j]==res[j])
         
     
-        if (t<max(model.control)):
-            model.hospital_capacity.add(model.x[t,5]<=m.real_max_patients/m.real_population)
-   
     
-
+    
+# Létrehozzuk a problémát
 M=create_model(x0)
+# Kiválasztjuk a solvert
 solution = pyo.SolverFactory('baron')
-
+# És megoldjuk a solver segítségével 
 solution=solution.solve(M, tee=True)
+# Tömbök az adatok eltárolásához
 s_values=[np.float64]*len(M.horizont)
 l_values=[np.float64]*len(M.horizont)
 p_values=[np.float64]*len(M.horizont)
@@ -76,8 +84,8 @@ a_values=[np.float64]*len(M.horizont)
 h_values=[np.float64]*len(M.horizont)
 r_values=[np.float64]*len(M.horizont)
 d_values=[np.float64]*len(M.horizont)
-
 u_values=[np.float64]*len(M.horizont)
+# Az adatok eltárolása, illetve a numerikus adatok korrekciója a normálás aés korrigálása érdekében
 for i in M.horizont:
     s_values[i]=M.x[i,0].value*m.real_population*m.correction
     l_values[i]=M.x[i,1].value*m.real_population*m.correction
@@ -90,9 +98,12 @@ for i in M.horizont:
 
     u_values[i]=M.u[int(i/7)].value*(0.1/k)
     
+# Az adatok vizualizáció érdekében létrehozott tömb
 t_values=np.linspace(0,t_end-1,len(M.horizont))
+# A kórházban lévő szmosságot a folytonos modellen is szimuláljuk, így ellenörizzük, hogy valóban jók a számításaink
 hospital=m.real_model_simulation(u_values)
 
+# Végül az adtok vizualizációja
 plt.figure(figsize=(12, 12))
 plt.subplot(2,2,3)
 plt.plot(t_values, hospital,color="k",linestyle="-",marker=".")
@@ -128,4 +139,3 @@ plt.ylabel("Control scenarios")
 plt.grid()
 
 plt.show()
-M.weeks
